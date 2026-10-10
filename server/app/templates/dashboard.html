@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classroom Control Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ececec; text-align: left; padding: 0.4rem; }
+  </style>
+</head>
+<body>
+  <h1>Classroom Control Dashboard</h1>
+  <div class="grid">
+    <div class="card"><strong>Online</strong><br/>{{ stats.online }}</div>
+    <div class="card"><strong>Offline</strong><br/>{{ stats.offline }}</div>
+    <div class="card"><strong>Open Tickets</strong><br/>{{ stats.open_tickets }}</div>
+    <div class="card"><strong>Avg Speed (Mbps)</strong><br/>↓ {{ stats.avg_download_mbps }} / ↑ {{ stats.avg_upload_mbps }}</div>
+    <div class="card"><strong>Avg Ping</strong><br/>{{ stats.avg_ping_ms }} ms</div>
+  </div>
+  <h2>Stations</h2>
+  <table>
+    <thead><tr><th>Room</th><th>Computer</th><th>Version</th><th>Status</th><th>Last Seen</th></tr></thead>
+    <tbody>
+      {% for s in stations %}
+      <tr>
+        <td>{{ s.room_id }}</td><td>{{ s.computer_id }}</td><td>{{ s.version }}</td><td>{{ "Online" if s.is_online else "Offline" }}</td><td>{{ s.last_seen_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>Open Tickets</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Room</th><th>Computer</th><th>Category</th><th>Description</th></tr></thead>
+    <tbody>
+      {% for t in tickets %}
+      <tr><td>{{ t.ticket_id }}</td><td>{{ t.room_id }}</td><td>{{ t.computer_id }}</td><td>{{ t.category }}</td><td>{{ t.description }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
