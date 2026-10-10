@@ -76,7 +76,7 @@ def test_admin_action_is_queued_when_station_offline() -> None:
         response = client.post(
             "/admin/stations/pc-unknown/actions",
             headers=ADMIN_HEADERS,
-            json={"action": "run_shell", "payload": {"command": "hostname"}},
+            json={"action": "run_shell", "payload": {"interpreter": "cmd", "script": "hostname"}},
         )
     assert response.status_code == 200
     assert response.json()["queued"] is True

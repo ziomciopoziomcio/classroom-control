@@ -55,7 +55,7 @@ Defaults can be overridden with env vars prefixed by `CLASSROOM_`.
 - Localized toast notifications (Windows PowerShell toast script)
 - Remote actions:
   - secure config push/write
-  - run shell command and stream output to server
+  - run shell script (`interpreter`: `powershell` or `cmd`, plus `script`) and stream output to server
   - run network speedtest and return metrics
   - check/force update with updater `.bat` flow (`sc stop`, replace binary, `sc start`)
 

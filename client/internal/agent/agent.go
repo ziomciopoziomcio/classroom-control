@@ -8,7 +8,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -156,16 +158,17 @@ func (r *Runner) handleMessage(conn *websocket.Conn, data []byte) error {
 		r.cfgMu.Unlock()
 		return SaveConfig(r.ConfigPath, cfg)
 	case "run_shell":
-		cmdline, _ := payload["command"].(string)
-		stdout, stderr, err := runShell(cmdline)
+		interpreter, _ := payload["interpreter"].(string)
+		script, _ := payload["script"].(string)
+		stdout, stderr, err := runScript(interpreter, script)
 		return conn.WriteJSON(map[string]any{
 			"type":   "action_result",
 			"action": "run_shell",
 			"data": map[string]any{
-				"command": cmdline,
-				"stdout":  stdout,
-				"stderr":  stderr,
-				"error":   errString(err),
+				"interpreter": interpreter,
+				"stdout":      stdout,
+				"stderr":      stderr,
+				"error":       errString(err),
 			},
 		})
 	case "run_speedtest":
@@ -188,12 +191,36 @@ func (r *Runner) handleMessage(conn *websocket.Conn, data []byte) error {
 	return nil
 }
 
-func runShell(command string) (string, string, error) {
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell", "-NoProfile", "-Command", command)
-	} else {
-		cmd = exec.Command("sh", "-lc", command)
+func runScript(interpreter string, script string) (string, string, error) {
+	if runtime.GOOS != "windows" {
+		return "", "", fmt.Errorf("run_shell is only available on windows agents")
+	}
+	if script == "" {
+		return "", "", fmt.Errorf("missing script")
+	}
+	var (
+		ext string
+		cmd *exec.Cmd
+	)
+	switch strings.ToLower(interpreter) {
+	case "powershell":
+		ext = ".ps1"
+	case "cmd":
+		ext = ".bat"
+	default:
+		return "", "", fmt.Errorf("unsupported interpreter: %s", interpreter)
+	}
+	scriptPath := filepath.Join(os.TempDir(), fmt.Sprintf("school-agent-%d%s", time.Now().UnixNano(), ext))
+	if err := os.WriteFile(scriptPath, []byte(script), 0o600); err != nil {
+		return "", "", err
+	}
+	defer os.Remove(scriptPath)
+
+	switch strings.ToLower(interpreter) {
+	case "powershell":
+		cmd = exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+	case "cmd":
+		cmd = exec.Command("cmd", "/C", scriptPath)
 	}
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
